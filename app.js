@@ -1,59 +1,60 @@
 const express = require("express");
-const app = express();
-
-// Parse JSON bodies
-app.use(express.json());
-
-// Import demo functions with code quality + security issues
 const {
   validateUser,
   processUser,
-  processData,
-  alwaysTrue,
-  insecureDemo,
-  impossibleLogic,
-  deadCodeDemo
+  process,
+  calculateUserAccess,
+  buildResponse,
+  shouldRetry
 } = require("./validation");
 
-// Demo endpoints
+const app = express();
+app.use(express.json());
 
-app.post("/validate", (req, res) => {
-  const valid = validateUser(req.body);
-  res.send({ valid });
-});
-
-app.post("/process-user", (req, res) => {
-  const result = processUser(req.body);
-  res.send({ result });
-});
-
-app.post("/process-data", (req, res) => {
-  const result = processData(req.body.data || []);
-  res.send({ result });
-});
-
-app.get("/always-true", (req, res) => {
-  const result = alwaysTrue("demo");
-  res.send({ result });
-});
-
-// Forced Aikido demo findings
-
-app.get("/demo/insecure", (req, res) => {
+// --- DEMO: CODE QUALITY – Debugging & short-circuit logic ---
+app.get("/demo/code-quality", (req, res) => {
   insecureDemo("demo");
-  res.send("ok");
+  return res.send("ok"); // short-circuit, bypassed logic
 });
 
-app.get("/demo/impossible", (req, res) => {
-  res.send({ result: impossibleLogic(1, 2) });
+function insecureDemo(input) {
+  console.log("Debug input:", input);
+  debugger; // Debugging artifact
+}
+
+// --- DEMO: Nested complexity ---
+app.get("/demo/complexity", (req, res) => {
+  const access = calculateUserAccess(
+    { active: true, role: "admin" },
+    "prod",
+    { allowAdmin: true }
+  );
+  res.send({ access });
 });
 
-app.get("/demo/dead", (req, res) => {
-  res.send({ result: deadCodeDemo() });
+// --- DEMO: Unused variables ---
+app.get("/demo/unused", (req, res) => {
+  res.send(buildResponse({ demo: true }));
 });
 
-// Server
-const PORT = 3000;
-app.listen(PORT, () => {
-  console.log(`Demo app running on port ${PORT}`);
+// --- DEMO: Magic numbers ---
+app.get("/demo/magic", (req, res) => {
+  res.send({ retry: shouldRetry(10) });
+});
+
+// --- Existing examples wired ---
+app.post("/user/validate", (req, res) => {
+  res.send({ valid: validateUser(req.body) });
+});
+
+app.post("/user/process", (req, res) => {
+  res.send(processUser(req.body));
+});
+
+app.post("/process", (req, res) => {
+  res.send(process(req.body));
+});
+
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
 });
