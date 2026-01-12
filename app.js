@@ -1,40 +1,59 @@
-// Demo change to trigger PR analysis
-
 const express = require("express");
-const { exec } = require("child_process");
-const { getUserByName } = require("./db");
-
 const app = express();
+
+// Parse JSON bodies
 app.use(express.json());
 
-// ❌ Unused variable
-const unusedVariable = 123;
+// Import demo functions with code quality + security issues
+const {
+  validateUser,
+  processUser,
+  processData,
+  alwaysTrue,
+  insecureDemo,
+  impossibleLogic,
+  deadCodeDemo
+} = require("./validation");
 
-// ❌ eval usage
-app.post("/calculate", (req, res) => {
-  const expression = req.body.expression;
-  const result = eval(expression);
+// Demo endpoints
+
+app.post("/validate", (req, res) => {
+  const valid = validateUser(req.body);
+  res.send({ valid });
+});
+
+app.post("/process-user", (req, res) => {
+  const result = processUser(req.body);
   res.send({ result });
 });
 
-// ❌ Command Injection
-app.post("/ping", (req, res) => {
-  const host = req.body.host;
-  exec("ping -c 1 " + host, (err, stdout) => {
-    if (err) {
-      res.send(err);
-    }
-    res.send(stdout);
-  });
+app.post("/process-data", (req, res) => {
+  const result = processData(req.body.data || []);
+  res.send({ result });
 });
 
-// ❌ SQL Injection
-app.get("/user", (req, res) => {
-  const name = req.query.name;
-  const query = getUserByName(name);
-  res.send({ query });
+app.get("/always-true", (req, res) => {
+  const result = alwaysTrue("demo");
+  res.send({ result });
 });
 
-app.listen(3000, () => {
-  console.log("App running on port 3000");
+// Forced Aikido demo findings
+
+app.get("/demo/insecure", (req, res) => {
+  insecureDemo("demo");
+  res.send("ok");
+});
+
+app.get("/demo/impossible", (req, res) => {
+  res.send({ result: impossibleLogic(1, 2) });
+});
+
+app.get("/demo/dead", (req, res) => {
+  res.send({ result: deadCodeDemo() });
+});
+
+// Server
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Demo app running on port ${PORT}`);
 });
