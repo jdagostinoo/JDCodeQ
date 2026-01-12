@@ -1,38 +1,60 @@
 const express = require("express");
-const { exec } = require("child_process");
-const { getUserByName } = require("./db");
+const {
+  validateUser,
+  processUser,
+  process,
+  calculateUserAccess,
+  buildResponse,
+  shouldRetry
+} = require("./validation");
 
 const app = express();
 app.use(express.json());
 
-// ❌ Unused variable
-const unusedVariable = 123;
-
-// ❌ eval usage
-app.post("/calculate", (req, res) => {
-  const expression = req.body.expression;
-  const result = eval(expression);
-  res.send({ result });
+// --- DEMO: CODE QUALITY – Debugging & short-circuit logic ---
+app.get("/demo/code-quality", (req, res) => {
+  insecureDemo("demo");
+  return res.send("ok"); // short-circuit, bypassed logic
 });
 
-// ❌ Command Injection
-app.post("/ping", (req, res) => {
-  const host = req.body.host;
-  exec("ping -c 1 " + host, (err, stdout) => {
-    if (err) {
-      res.send(err);
-    }
-    res.send(stdout);
-  });
+function insecureDemo(input) {
+  console.log("Debug input:", input);
+  debugger; // Debugging artifact
+}
+
+// --- DEMO: Nested complexity ---
+app.get("/demo/complexity", (req, res) => {
+  const access = calculateUserAccess(
+    { active: true, role: "admin" },
+    "prod",
+    { allowAdmin: true }
+  );
+  res.send({ access });
 });
 
-// ❌ SQL Injection
-app.get("/user", (req, res) => {
-  const name = req.query.name;
-  const query = getUserByName(name);
-  res.send({ query });
+// --- DEMO: Unused variables ---
+app.get("/demo/unused", (req, res) => {
+  res.send(buildResponse({ demo: true }));
+});
+
+// --- DEMO: Magic numbers ---
+app.get("/demo/magic", (req, res) => {
+  res.send({ retry: shouldRetry(10) });
+});
+
+// --- Existing examples wired ---
+app.post("/user/validate", (req, res) => {
+  res.send({ valid: validateUser(req.body) });
+});
+
+app.post("/user/process", (req, res) => {
+  res.send(processUser(req.body));
+});
+
+app.post("/process", (req, res) => {
+  res.send(process(req.body));
 });
 
 app.listen(3000, () => {
-  console.log("App running on port 3000");
+  console.log("Server running on port 3000");
 });
